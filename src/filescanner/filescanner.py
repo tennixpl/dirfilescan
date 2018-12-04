@@ -37,13 +37,14 @@ def validate_args():
     # Validate file exclude list
     # Any possible exploits to happen here?
 
-    file_extensions = args.exclude.split(',')
+    if args.exclude != None:
+        file_extensions = args.exclude.split(',')
 
-    for ex in file_extensions:
-        if ex[0] == '.':
-            excludeList.append(ex[1:])
-        else:
-            excludeList.append(ex)
+        for ex in file_extensions:
+            if ex[0] == '.':
+                excludeList.append(ex[1:])
+            else:
+                excludeList.append(ex)
     # anything tha would actually fail? --tennixpl
     # ------------------------------------------------------------------------------------------------------------------
     # Validate file exists
@@ -80,19 +81,24 @@ def directory_crawler(path, recursionsleft):
     filenamelist =[]
     dirnamelist = []
 
-    nameslist = os.path(path)
+    print(path)
+    nameslist = os.listdir(str(path))
+    print(nameslist)
+
+    logger.info(f"List of found file names {nameslist}")
 
     for name in nameslist:
-        if os.path.islink(name):
+        pathname = path + '/' + name
+        if os.path.islink(pathname):
             logger.info("We do not follow symlinks, we want to avoid infinite recursions")
-        elif os.path.isfile(name):
+        elif os.path.isfile(pathname):
             filenamelist.append(name)
-        elif os.path.isdir(name):
+        elif os.path.isdir(pathname):
             dirnamelist.append(name)
         else:
             logger.info(f"'{name}' in {path} is not a file or directory...skipping")
 
-    scanfiles(filenamelist)
+    scanfiles(path, filenamelist)
 
     if recursionsleft > 0:
         for dirname in dirnamelist:
@@ -108,41 +114,45 @@ def directory_crawler(path, recursionsleft):
 #######################################################################################################################
 
 
-def scanfiles(filenamelist):
+def scanfiles(path, filenamelist):
 
     for filename in filenamelist:
-        filenamesplit = filename.split('.').lower()
+        filenamesplit = filename.split('.')
 
+        found =[]
         if not len(filenamesplit) > 1: # assume we have a binary executable
             logger.info("We ignore binary files right now")
             # also assume that no one is being nefarious and simply hiding stuff
             # improvements for later
         else:
             try:
-                file_to_scan = open(filename, "-r")
+                file_to_scan = open(path + '/' + filename, 'r')
                 file_lines = file_to_scan.readlines()
+                file_to_scan.close()
 
                 for line in file_lines:
                     for dw in dwlist:
-                        re.match(dw, line).IGNORECASE()
-                        #re.match(dw, line, re.IGNORECASE)
+                        #found = re.match(dw, line).IGNORECASE()
+
+                        if re.findall(dw, line, re.IGNORECASE) != []:
+                            found.append(dw)
+
+                # One find and exit
             except FileNotFoundError:
                 logger.error(f"Issuing opening {filename}")
             finally:
-                file_to_scan.close()
-
-
-
+                None
+            print(f"The found words are {found}")
 
 #######################################################################################################################
 
 
 def load_dirtywords():
-    global dwlist=[]
+    global dwlist
+    dwlist=[]
 
-
-    dw.append("[bB][oO][bB]")
-    dw.append("mizlud")
+    dwlist.append("[bB][oO][bB]")
+    dwlist.append("mizlud")
 
 
 #######################################################################################################################
@@ -155,6 +165,8 @@ def main():
 
     args = create_parser().parse_args()
     validate_args()
+    load_dirtywords()
+    directory_crawler(args.dir, args.recursive_depth)
 
 #######################################################################################################################
 
