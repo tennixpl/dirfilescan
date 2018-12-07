@@ -79,7 +79,14 @@ def main():
     args = create_parser().parse_args()
     validate_args()
 
+
     print(args)
+
+
+
+
+
+
 
 
 if __name__ == "__main__":

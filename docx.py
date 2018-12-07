@@ -40,3 +40,5 @@ def scan_word_doc(path, name, dwlist):
 
     # TODO Delete me and make a proper log
     print(f"The found words are {found}")
+
+
