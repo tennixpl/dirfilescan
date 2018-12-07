@@ -23,7 +23,7 @@ def create_parser():
 
 
 def validate_args():
-    ###
+    ###""
     # Validate all args in arg parse
     ###
 
@@ -64,7 +64,7 @@ def validate_args():
         logger.info(f"Recursive Depth of {args.recursive_depth} is validated")
     else:
         validated_good = False
-        print(f"Recursive dpeth '{args.recursive_depth}' is not valid, must be bigger than -1, -1 means full depth.")
+        print(f"Recursive depth '{args.recursive_depth}' is not valid, must be bigger than -1, -1 means full depth.")
         print("Resetting recursive depth to -1")
         args.recursive_depth = -1
 
@@ -86,3 +86,4 @@ if __name__ == "__main__":
     main()
 else:
     print("test")
+    main()
