@@ -11,6 +11,26 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# Get the 'plugins'
+sys.path.append(f"{os.path.realpath(__file__).rsplit ('/', 1)[0]}/scanners/")
+
+
+import text
+
+
+def _txt(path, filename, dwlist):
+    print("_txt")
+    text.scan_file(path, filename, dwlist)
+
+
+scanners = {
+    'txt': _txt
+}
+
+
+
+
 #######################################################################################################################
 
 
@@ -21,7 +41,7 @@ def create_parser():
     parser.add_argument("-d", "--dir", help="Directory to scan, full path works best", required=False)
     parser.add_argument("-r", "--recursive_depth", type=int, help="Recursive depth of directories to scan", default=-1, required=False)
     parser.add_argument("-e", "--exclude", help="File types to exclude, comma separated list", required=False)
-    parser.add_argument("-c", "--config", help="config json file with bad words", default="dirtyword.json", required=False)
+    parser.add_argument("-c", "--config", help="config json file with bad words", default="dirtywords.json", required=False)
     return parser
 
 #######################################################################################################################
@@ -51,6 +71,7 @@ def validate_args():
     if os.path.isfile(args.config):
         logger.info("Config File Exists")
     else:
+
         validated_good = False
         print(f"{args.config} file given for config doesnt exist")
         logger.error(f"Config file {args.config} is not reachable in current path '{os.path.abspath(__file__)}'")
@@ -115,34 +136,13 @@ def directory_crawler(path, recursionsleft):
 
 
 def scanfiles(path, filenamelist):
-
+    dws_found = []
     for filename in filenamelist:
-        filenamesplit = filename.split('.')
+        if filename.split('.')[-1] in scanners:
+            dws_found.append(scanners[(filename.split('.')[-1])](path, filename, dwlist))
 
-        found =[]
-        if not len(filenamesplit) > 1: # assume we have a binary executable
-            logger.info("We ignore binary files right now")
-            # also assume that no one is being nefarious and simply hiding stuff
-            # improvements for later
-        else:
-            try:
-                file_to_scan = open(path + '/' + filename, 'r')
-                file_lines = file_to_scan.readlines()
-                file_to_scan.close()
+    print(dws_found)
 
-                for line in file_lines:
-                    for dw in dwlist:
-                        #found = re.match(dw, line).IGNORECASE()
-
-                        if re.findall(dw, line, re.IGNORECASE) != []:
-                            found.append(dw)
-
-                # One find and exit
-            except FileNotFoundError:
-                logger.error(f"Issuing opening {filename}")
-            finally:
-                None
-            print(f"The found words are {found}")
 
 #######################################################################################################################
 
